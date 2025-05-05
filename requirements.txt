@@ -18,6 +18,14 @@ pyyaml>=6.0.1
 jsonschema>=4.19.1
 pydantic>=2.4.2
 
+# PDF generation
+fpdf>=1.7.2
+
+# Web application
+streamlit>=1.22.0
+pandas>=1.5.3
+plotly>=5.14.1
+
 # Testing
 pytest>=7.4.0
 pytest-cov>=4.1.0
