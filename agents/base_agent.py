@@ -1,5 +1,5 @@
 from crewai import Agent
-from models.watsonx_llm import llm
+from models import llm
 import logging
 
 logger = logging.getLogger(__name__)

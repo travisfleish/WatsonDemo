@@ -18,12 +18,12 @@ from config.settings import PROMPTS_DIR, JSON_OUTPUT_INDENT
 logger = logging.getLogger(__name__)
 
 
-def validate_json_output(json_str: str, schema: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def validate_json_output(json_input, schema: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Validate JSON output against a schema and fix common issues.
 
     Args:
-        json_str: JSON string to validate
+        json_input: JSON input (can be string, dict, or CrewOutput)
         schema: Optional JSON schema to validate against
 
     Returns:
@@ -32,50 +32,83 @@ def validate_json_output(json_str: str, schema: Optional[Dict[str, Any]] = None)
     Raises:
         ValueError: If JSON is invalid and cannot be fixed
     """
-    # Try to parse the JSON
-    try:
-        parsed_json = json.loads(json_str)
-
-        # If schema is provided, validate against it
-        if schema:
-            try:
-                validate(instance=parsed_json, schema=schema)
-            except ValidationError as e:
-                logger.warning(f"JSON validation error: {str(e)}")
-                # Here we could implement automatic fixes for common schema issues
-
-        return parsed_json
-
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON parse error: {str(e)}")
-
-        # Try to fix common JSON formatting issues
+    # If input is already a dict, use it directly
+    if isinstance(json_input, dict):
+        parsed_json = json_input
+    # If input is a string, parse it
+    elif isinstance(json_input, str):
         try:
-            # Sometimes LLMs produce invalid JSON with extra text before/after
-            # Try to extract just the JSON part with { } or [ ]
-            if '{' in json_str and '}' in json_str:
-                start_idx = json_str.find('{')
-                end_idx = json_str.rfind('}') + 1
-                fixed_json_str = json_str[start_idx:end_idx]
-                return json.loads(fixed_json_str)
+            # Try to parse the JSON
+            parsed_json = json.loads(json_input)
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parse error: {str(e)}")
+            # Try to fix common JSON formatting issues
+            try:
+                # Sometimes LLMs produce invalid JSON with extra text before/after
+                # Try to extract just the JSON part with { } or [ ]
+                if '{' in json_input and '}' in json_input:
+                    start_idx = json_input.find('{')
+                    end_idx = json_input.rfind('}') + 1
+                    fixed_json_str = json_input[start_idx:end_idx]
+                    return json.loads(fixed_json_str)
 
+                elif '[' in json_input and ']' in json_input:
+                    start_idx = json_input.find('[')
+                    end_idx = json_input.rfind(']') + 1
+                    fixed_json_str = json_input[start_idx:end_idx]
+                    return json.loads(fixed_json_str)
+
+                # Fix missing quotes around keys
+                if ': ' in json_input and not '"' in json_input:
+                    import re
+                    fixed_json_str = re.sub(r'(\w+):\s', r'"\1": ', json_input)
+                    return json.loads(fixed_json_str)
+
+                raise ValueError(f"Failed to fix JSON: {json_input[:100]}...")
+
+            except (json.JSONDecodeError, ValueError) as fix_error:
+                logger.error(f"Failed to fix JSON: {str(fix_error)}")
+                raise ValueError(f"Invalid JSON output: {str(e)}. Could not automatically fix.")
+    # Handle CrewOutput or other objects
+    else:
+        # Try to get string representation and parse it
+        try:
+            json_str = str(json_input)
+
+            # Check if it's a markdown code block with JSON
+            if "```json" in json_str and "```" in json_str[json_str.find("```json")+7:]:
+                # Extract JSON from markdown
+                json_start = json_str.find("```json") + 7
+                json_end = json_str.find("```", json_start)
+                json_str = json_str[json_start:json_end].strip()
+
+            # Try to find JSON-like content in the string
             elif '[' in json_str and ']' in json_str:
                 start_idx = json_str.find('[')
                 end_idx = json_str.rfind(']') + 1
-                fixed_json_str = json_str[start_idx:end_idx]
-                return json.loads(fixed_json_str)
+                json_str = json_str[start_idx:end_idx]
+            elif '{' in json_str and '}' in json_str:
+                start_idx = json_str.find('{')
+                end_idx = json_str.rfind('}') + 1
+                json_str = json_str[start_idx:end_idx]
 
-            # Fix missing quotes around keys
-            if ': ' in json_str and not '"' in json_str:
-                import re
-                fixed_json_str = re.sub(r'(\w+):\s', r'"\1": ', json_str)
-                return json.loads(fixed_json_str)
+            # Parse the extracted string
+            parsed_json = json.loads(json_str)
 
-            raise ValueError(f"Failed to fix JSON: {json_str[:100]}...")
+        except (ValueError, json.JSONDecodeError) as e:
+            logger.error(f"Failed to parse object as JSON: {str(e)}")
+            # Return the original object if we can't parse it
+            return json_input
 
-        except (json.JSONDecodeError, ValueError) as fix_error:
-            logger.error(f"Failed to fix JSON: {str(fix_error)}")
-            raise ValueError(f"Invalid JSON output: {str(e)}. Could not automatically fix.")
+    # If schema is provided, validate against it
+    if schema and parsed_json:
+        try:
+            validate(instance=parsed_json, schema=schema)
+        except ValidationError as e:
+            logger.warning(f"JSON validation error: {str(e)}")
+            # Here we could implement automatic fixes for common schema issues
+
+    return parsed_json
 
 
 def load_prompt_template(template_name: str) -> str:

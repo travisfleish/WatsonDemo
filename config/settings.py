@@ -16,10 +16,11 @@ PROMPTS_DIR = BASE_DIR / "prompts"
 WATSONX_APIKEY = os.getenv("WATSONX_APIKEY")
 WATSONX_PROJECT_ID = os.getenv("WATSONX_PROJECT_ID")
 WATSONX_URL = os.getenv("WATSONX_URL")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
 # LLM Settings
-LLM_MODEL = "watsonx/mistralai/mistral-large"
+LLM_MODEL = "gpt-4-turbo"  # Or "gpt-3.5-turbo" for a more cost-effective option
 LLM_MAX_TOKENS = 1000
 LLM_TEMPERATURE = 0
 LLM_TOP_P = 1.0

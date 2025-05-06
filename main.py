@@ -69,8 +69,9 @@ def main(input_paper, output_dir="output"):
 
         # Validate the papers result
         try:
+            # Handle different output types
             papers_data = validate_json_output(papers_result)
-            logger.info(f"Found {len(papers_data)} related papers")
+            logger.info(f"Found related papers")
         except ValueError as e:
             logger.error(f"Invalid papers result: {str(e)}")
             logger.warning("Proceeding with raw paper finding result")
@@ -82,7 +83,7 @@ def main(input_paper, output_dir="output"):
             agents=[paper_analysis_task.agent],
             tasks=[paper_analysis_task],
             process=Process.sequential,
-            verbose=2
+            verbose=True
         )
 
         logger.info("Executing paper analysis task...")
@@ -103,7 +104,7 @@ def main(input_paper, output_dir="output"):
             agents=[idea_generation_task.agent],
             tasks=[idea_generation_task],
             process=Process.sequential,
-            verbose=2
+            verbose=True
         )
 
         logger.info("Executing idea generation task...")
@@ -112,7 +113,7 @@ def main(input_paper, output_dir="output"):
         # Validate the ideas result
         try:
             ideas_data = validate_json_output(ideas_result)
-            logger.info(f"Generated {len(ideas_data)} research ideas")
+            logger.info("Generated research ideas")
         except ValueError as e:
             logger.error(f"Invalid ideas result: {str(e)}")
             logger.warning("Proceeding with raw ideas result")
@@ -124,7 +125,7 @@ def main(input_paper, output_dir="output"):
             agents=[idea_refinement_task.agent],
             tasks=[idea_refinement_task],
             process=Process.sequential,
-            verbose=2
+            verbose=True
         )
 
         logger.info("Executing idea refinement task...")
@@ -133,7 +134,7 @@ def main(input_paper, output_dir="output"):
         # Validate the refined ideas result
         try:
             refined_ideas_data = validate_json_output(refined_ideas_result)
-            logger.info(f"Refined {len(refined_ideas_data)} research ideas")
+            logger.info("Refined research ideas")
         except ValueError as e:
             logger.error(f"Invalid refined ideas result: {str(e)}")
             logger.warning("Proceeding with raw refined ideas result")
@@ -145,7 +146,7 @@ def main(input_paper, output_dir="output"):
             agents=[proposal_development_task.agent],
             tasks=[proposal_development_task],
             process=Process.sequential,
-            verbose=2
+            verbose=True
         )
 
         logger.info("Executing proposal development task...")
@@ -154,12 +155,15 @@ def main(input_paper, output_dir="output"):
         # Step 8: Process and validate the final result
         try:
             proposals = validate_json_output(proposals_result)
-            logger.info(f"Generated {len(proposals)} research proposals")
+            logger.info(f"Generated research proposals")
 
             # Save the proposals to disk
-            for i, proposal in enumerate(proposals, 1):
-                filepath = save_research_proposal(proposal, output_dir)
-                logger.info(f"Saved proposal {i} to {filepath}")
+            if isinstance(proposals, list):
+                for i, proposal in enumerate(proposals, 1):
+                    filepath = save_research_proposal(proposal, output_dir)
+                    logger.info(f"Saved proposal {i} to {filepath}")
+            else:
+                logger.warning("Proposals is not a list, unable to save individual proposals")
 
             # Display summary information
             display_proposals_summary(proposals)
@@ -185,13 +189,34 @@ def display_proposals_summary(proposals):
     Args:
         proposals (list): List of research proposal dictionaries
     """
+    if not proposals:
+        print("\nNo proposals generated.")
+        return
+
+    if not isinstance(proposals, list):
+        print(f"\nProposals is not a list, but a {type(proposals)}.")
+        return
+
     print(f"\nGenerated {len(proposals)} research proposals:")
 
     for i, proposal in enumerate(proposals, 1):
+        if not isinstance(proposal, dict):
+            print(f"\nProposal {i}: Not a dictionary, skipping display")
+            continue
+
         print(f"\nProposal {i}:")
         print(f"Title: {proposal.get('proposal_title', 'N/A')}")
-        print(f"Methodology: {proposal.get('methodology', 'N/A')[:200]}...")
-        print(f"Expected Outcomes: {proposal.get('expected_outcomes', 'N/A')[:200]}...")
+
+        # Safely get text properties with fallbacks
+        methodology = proposal.get('methodology', 'N/A')
+        outcomes = proposal.get('expected_outcomes', 'N/A')
+
+        # Truncate long text for display
+        methodology_preview = methodology[:200] + "..." if len(methodology) > 200 else methodology
+        outcomes_preview = outcomes[:200] + "..." if len(outcomes) > 200 else outcomes
+
+        print(f"Methodology: {methodology_preview}")
+        print(f"Expected Outcomes: {outcomes_preview}")
         print("-" * 80)
 
 
