@@ -35,39 +35,38 @@ class PaperAnalysisTask:
         )
 
         # Define expected output format with schema example
-        expected_output = (
-            "A JSON object summarizing key knowledge and limitations with this structure:\n"
-            "{\n"
-            "  \"key_findings\": [\n"
-            "    {\n"
-            "      \"topic\": \"Topic Name\",\n"
-            "      \"findings\": \"Synthesized findings across papers\",\n"
-            "      \"papers\": [\"Paper Title 1\", \"Paper Title 2\"]\n"
-            "    },\n"
-            "    ...\n"
-            "  ],\n"
-            "  \"methodologies\": [\n"
-            "    {\n"
-            "      \"approach\": \"Methodology Name\",\n"
-            "      \"description\": \"Description of the methodology\",\n"
-            "      \"papers\": [\"Paper Title 1\", \"Paper Title 3\"]\n"
-            "    },\n"
-            "    ...\n"
-            "  ],\n"
-            "  \"limitations\": [\n"
-            "    {\n"
-            "      \"limitation\": \"Description of limitation or gap\",\n"
-            "      \"papers\": [\"Paper Title 2\", \"Paper Title 4\"]\n"
-            "    },\n"
-            "    ...\n"
-            "  ],\n"
-            "  \"emerging_trends\": [\n"
-            "    \"Trend 1 description\",\n"
-            "    \"Trend 2 description\",\n"
-            "    ...\n"
-            "  ]\n"
-            "}\n"
-        )
+        expected_output = """A JSON object summarizing key knowledge and limitations with this structure:
+        {{
+          "key_findings": [
+            {{
+              "topic": "Topic Name",
+              "findings": "Synthesized findings across papers",
+              "papers": ["Paper Title 1", "Paper Title 2"]
+            }},
+            ...
+          ],
+          "methodologies": [
+            {{
+              "approach": "Methodology Name",
+              "description": "Description of the methodology",
+              "papers": ["Paper Title 1", "Paper Title 3"]
+            }},
+            ...
+          ],
+          "limitations": [
+            {{
+              "limitation": "Description of limitation or gap",
+              "papers": ["Paper Title 2", "Paper Title 4"]
+            }},
+            ...
+          ],
+          "emerging_trends": [
+            "Trend 1 description",
+            "Trend 2 description",
+            ...
+          ]
+        }}
+        """
 
         return Task(
             description=task_description,

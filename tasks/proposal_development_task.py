@@ -37,26 +37,25 @@ class ProposalDevelopmentTask:
         )
 
         # Define expected output format with schema example
-        expected_output = (
-            "A JSON list of research proposals with this structure:\n"
-            "[\n"
-            "  {\n"
-            "    \"proposal_title\": \"Final Research Proposal Title\",\n"
-            "    \"refined_idea_title\": \"Title from Refined Idea\",\n"
-            "    \"introduction\": \"Introduction and background of the research problem\",\n"
-            "    \"research_questions\": [\"Question 1\", \"Question 2\"],\n"
-            "    \"hypotheses\": [\"Hypothesis 1\", \"Hypothesis 2\"],\n"
-            "    \"methodology\": \"Detailed description of methodology and approaches\",\n"
-            "    \"expected_outcomes\": \"Description of expected outcomes and significance\",\n"
-            "    \"potential_challenges\": \"Challenges and mitigation strategies\",\n"
-            "    \"ethical_considerations\": \"Relevant ethical considerations\",\n"
-            "    \"resource_requirements\": \"Required resources and budget considerations\",\n"
-            "    \"timeline\": \"Projected timeline for research phases\",\n"
-            "    \"references\": [\"Reference 1\", \"Reference 2\"]\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-        )
+        expected_output = """A JSON list of research proposals with this structure:
+        [
+          {{
+            "proposal_title": "Final Research Proposal Title",
+            "refined_idea_title": "Title from Refined Idea",
+            "introduction": "Introduction and background of the research problem",
+            "research_questions": ["Question 1", "Question 2"],
+            "hypotheses": ["Hypothesis 1", "Hypothesis 2"],
+            "methodology": "Detailed description of methodology and approaches",
+            "expected_outcomes": "Description of expected outcomes and significance",
+            "potential_challenges": "Challenges and mitigation strategies",
+            "ethical_considerations": "Relevant ethical considerations",
+            "resource_requirements": "Required resources and budget considerations",
+            "timeline": "Projected timeline for research phases",
+            "references": ["Reference 1", "Reference 2"]
+          }},
+          ...
+        ]
+        """
 
         return Task(
             description=task_description,

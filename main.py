@@ -60,7 +60,7 @@ def main(input_paper, output_dir="output"):
                 paper_finding_task
             ],
             process=Process.sequential,
-            verbose=2
+            verbose=True
         )
 
         # Step 3: Execute the paper finding task

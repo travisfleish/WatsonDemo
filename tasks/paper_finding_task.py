@@ -1,3 +1,4 @@
+# tasks/paper_finding_task.py
 from crewai import Task
 from agents.research_paper_finder import ResearchPaperFinder
 import logging
@@ -33,21 +34,20 @@ class PaperFindingTask:
             f"Return your findings as a well-structured JSON list of papers."
         )
 
-        # Define expected output format with schema example
-        expected_output = (
-            "A JSON list of papers with this structure:\n"
-            "[\n"
-            "  {\n"
-            "    \"title\": \"Paper Title\",\n"
-            "    \"authors\": \"Author1, Author2, ...\",\n"
-            "    \"year\": 2023,\n"
-            "    \"venue\": \"Journal/Conference Name\",\n"
-            "    \"url\": \"https://paper-url.com\",\n"
-            "    \"summary\": \"Brief summary of the paper's key contributions\"\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-        )
+        # Define expected output format with schema example - ESCAPE CURLY BRACES
+        expected_output = """A JSON list of papers with this structure:
+[
+  {{
+    "title": "Paper Title",
+    "authors": "Author1, Author2, ...",
+    "year": 2023,
+    "venue": "Journal/Conference Name",
+    "url": "https://paper-url.com",
+    "summary": "Brief summary of the paper's key contributions"
+  }},
+  ...
+]
+"""
 
         return Task(
             description=task_description,

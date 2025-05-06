@@ -1,17 +1,14 @@
 """
 Tool for scraping website content.
-
-This module provides a tool for extracting content from websites, specifically
-designed for scraping research papers and related scientific content.
 """
-
 import logging
 import requests
 from bs4 import BeautifulSoup
 import time
 from typing import Dict, Any, Optional, List
-from langchain.tools import BaseTool
-from crewai.tools import BaseTool as CrewAIBaseTool
+
+# Import from the base_tool module directly to avoid circular imports
+from tools.base_tool import create_tool
 
 # Import configuration
 from config.settings import (
@@ -22,41 +19,26 @@ from config.settings import (
 
 logger = logging.getLogger(__name__)
 
-
-class ScrapeWebsiteTool(CrewAIBaseTool, BaseTool):
+def scrape_website_func(url: str) -> str:
     """
-    Tool for scraping website content, particularly useful for extracting
-    information from scientific papers and research articles.
-    """
-
-    name = "scrape_website"
-    description = """
-    Use this tool to extract text content from a website URL.
+    Extract text content from a website URL.
     Particularly useful for scientific papers, research articles, and academic websites.
-    Input should be a valid URL.
+
+    Args:
+        url: The URL to scrape
+
+    Returns:
+        str: Extracted content or error message
     """
+    logger.info(f"Scraping website: {url}")
 
-    def __init__(self):
-        """Initialize the scraping tool with default parameters."""
-        super().__init__()
-        self.timeout = SCRAPE_TIMEOUT
-        self.max_retries = SCRAPE_MAX_RETRIES
-        self.user_agent = SCRAPE_USER_AGENT
-        self.headers = {
-            'User-Agent': self.user_agent
-        }
+    # Define headers
+    headers = {
+        'User-Agent': SCRAPE_USER_AGENT
+    }
 
-    def _extract_main_content(self, soup: BeautifulSoup) -> str:
-        """
-        Extract the main content from a webpage, with special handling for
-        common academic and scientific paper formats.
-
-        Args:
-            soup: BeautifulSoup object of the parsed HTML
-
-        Returns:
-            str: Extracted main content
-        """
+    def extract_main_content(soup):
+        """Extract the main content from a webpage"""
         # Try to find common content containers in academic sites
         content_candidates = []
 
@@ -110,16 +92,8 @@ class ScrapeWebsiteTool(CrewAIBaseTool, BaseTool):
         # If all else fails, return the whole body content
         return soup.get_text(separator=' ', strip=True)
 
-    def _extract_metadata(self, soup: BeautifulSoup) -> Dict[str, str]:
-        """
-        Extract metadata from an academic paper or website.
-
-        Args:
-            soup: BeautifulSoup object of the parsed HTML
-
-        Returns:
-            Dict[str, str]: Dictionary of metadata
-        """
+    def extract_metadata(soup):
+        """Extract metadata from an academic paper or website"""
         metadata = {}
 
         # Try to extract title
@@ -156,94 +130,28 @@ class ScrapeWebsiteTool(CrewAIBaseTool, BaseTool):
 
         return metadata
 
-    def _process_url(self, url: str, retries: int = 0) -> Dict[str, Any]:
-        """
-        Process a URL to extract content and metadata with retry logic.
+    # Main execution
+    try:
+        # Make the request
+        response = requests.get(url, headers=headers, timeout=SCRAPE_TIMEOUT)
+        response.raise_for_status()
 
-        Args:
-            url: The URL to scrape
-            retries: Current retry count
+        # Check if content is HTML
+        content_type = response.headers.get('Content-Type', '')
+        if 'text/html' not in content_type and 'application/xhtml+xml' not in content_type:
+            return f"URL does not contain HTML content. Content-Type: {content_type}"
 
-        Returns:
-            Dict[str, Any]: Dictionary containing content and metadata
-        """
-        if retries >= self.max_retries:
-            logger.error(f"Max retries ({self.max_retries}) exceeded for URL: {url}")
-            return {"error": f"Failed to scrape URL after {self.max_retries} attempts."}
+        # Parse HTML
+        soup = BeautifulSoup(response.content, 'lxml')
 
-        try:
-            response = requests.get(url, headers=self.headers, timeout=self.timeout)
-            response.raise_for_status()
-
-            # Check if content is HTML
-            content_type = response.headers.get('Content-Type', '')
-            if 'text/html' not in content_type and 'application/xhtml+xml' not in content_type:
-                return {
-                    "error": f"URL does not contain HTML content. Content-Type: {content_type}",
-                    "raw_content": response.text[:1000]  # First 1000 chars for inspection
-                }
-
-            # Parse HTML
-            soup = BeautifulSoup(response.content, 'lxml')
-
-            # Extract content and metadata
-            content = self._extract_main_content(soup)
-            metadata = self._extract_metadata(soup)
-
-            return {
-                "content": content,
-                "metadata": metadata,
-                "url": url
-            }
-
-        except requests.exceptions.Timeout:
-            logger.warning(f"Timeout occurred for URL: {url}. Retrying ({retries + 1}/{self.max_retries})...")
-            time.sleep(2 ** retries)  # Exponential backoff
-            return self._process_url(url, retries + 1)
-
-        except requests.exceptions.HTTPError as e:
-            status_code = e.response.status_code
-            logger.error(f"HTTP error {status_code} for URL: {url}")
-
-            if status_code in [429, 503]:  # Rate limiting or service unavailable
-                if retries < self.max_retries:
-                    wait_time = 2 ** retries  # Exponential backoff
-                    logger.info(f"Rate limited or service unavailable. Waiting {wait_time}s before retry...")
-                    time.sleep(wait_time)
-                    return self._process_url(url, retries + 1)
-
-            return {"error": f"HTTP error {status_code}: {str(e)}"}
-
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request exception for URL {url}: {str(e)}")
-            return {"error": f"Failed to fetch URL: {str(e)}"}
-
-        except Exception as e:
-            logger.error(f"Unexpected error processing URL {url}: {str(e)}")
-            return {"error": f"Unexpected error: {str(e)}"}
-
-    def _run(self, url: str) -> str:
-        """
-        Run the scraping tool on a URL.
-
-        Args:
-            url: The URL to scrape
-
-        Returns:
-            str: Extracted content or error message
-        """
-        logger.info(f"Scraping website: {url}")
-        result = self._process_url(url)
-
-        if "error" in result:
-            logger.error(f"Error scraping {url}: {result['error']}")
-            return f"Failed to scrape website: {result['error']}"
+        # Extract content and metadata
+        content = extract_main_content(soup)
+        metadata = extract_metadata(soup)
 
         # Format the output
         output = ""
 
-        if "metadata" in result:
-            metadata = result["metadata"]
+        if metadata:
             if "title" in metadata:
                 output += f"Title: {metadata['title']}\n\n"
 
@@ -253,9 +161,8 @@ class ScrapeWebsiteTool(CrewAIBaseTool, BaseTool):
             if "publication_date" in metadata:
                 output += f"Publication Date: {metadata['publication_date']}\n\n"
 
-        if "content" in result:
-            # Limit content length to avoid token limits
-            content = result["content"]
+        # Limit content length to avoid token limits
+        if content:
             if len(content) > 8000:
                 output += f"Content (truncated):\n{content[:8000]}...\n\n"
                 output += f"[Content truncated, full text is {len(content)} characters]"
@@ -265,14 +172,23 @@ class ScrapeWebsiteTool(CrewAIBaseTool, BaseTool):
         logger.info(f"Successfully scraped website: {url}")
         return output
 
-    def run(self, url: str) -> str:
-        """
-        Run the scraping tool (CrewAI compatible method).
+    except requests.exceptions.Timeout:
+        return f"Timeout occurred while scraping {url}"
 
-        Args:
-            url: The URL to scrape
+    except requests.exceptions.HTTPError as e:
+        return f"HTTP error {e.response.status_code} while scraping {url}: {str(e)}"
 
-        Returns:
-            str: Extracted content or error message
-        """
-        return self._run(url)
+    except requests.exceptions.RequestException as e:
+        return f"Error requesting {url}: {str(e)}"
+
+    except Exception as e:
+        error_msg = f"Unexpected error scraping {url}: {str(e)}"
+        logger.error(error_msg)
+        return error_msg
+
+# Create the tool
+scrape_website = create_tool(
+    func=scrape_website_func,
+    name="scrape_website",
+    description="Extract text content from a website URL. Particularly useful for scientific papers and research articles."
+)

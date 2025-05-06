@@ -36,23 +36,22 @@ class IdeaRefinementTask:
         )
 
         # Define expected output format with schema example
-        expected_output = (
-            "A JSON list of refined ideas with this structure:\n"
-            "[\n"
-            "  {\n"
-            "    \"refined_idea_title\": \"Refined Title of Research Idea\",\n"
-            "    \"original_idea_title\": \"Original Title from Seed Idea\",\n"
-            "    \"description\": \"Enhanced description with improvements\",\n"
-            "    \"methodology_outline\": \"Brief outline of proposed methodology\",\n"
-            "    \"required_resources\": \"Description of necessary resources\",\n"
-            "    \"estimated_timeline\": \"Estimated timeline for completion\",\n"
-            "    \"potential_challenges\": [\"Challenge 1\", \"Challenge 2\"],\n"
-            "    \"expected_impact\": \"Description of the expected impact\",\n"
-            "    \"feasibility_score\": 7.5  // Rate from 1-10 how feasible this idea is\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-        )
+        expected_output = """A JSON list of refined ideas with this structure:
+        [
+          {{
+            "refined_idea_title": "Refined Title of Research Idea",
+            "original_idea_title": "Original Title from Seed Idea",
+            "description": "Enhanced description with improvements",
+            "methodology_outline": "Brief outline of proposed methodology",
+            "required_resources": "Description of necessary resources",
+            "estimated_timeline": "Estimated timeline for completion",
+            "potential_challenges": ["Challenge 1", "Challenge 2"],
+            "expected_impact": "Description of the expected impact",
+            "feasibility_score": 7.5  // Rate from 1-10 how feasible this idea is
+          }},
+          ...
+        ]
+        """
 
         return Task(
             description=task_description,

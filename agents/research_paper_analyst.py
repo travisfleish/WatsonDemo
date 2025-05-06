@@ -1,5 +1,5 @@
 from agents.base_agent import BaseAgent
-from tools.scrape_website import ScrapeWebsiteTool
+from tools.scrape_website import scrape_website  # Import the function instead of the class
 from utils.helpers import load_prompt_template
 
 
@@ -14,9 +14,6 @@ class ResearchPaperAnalyst(BaseAgent):
         Returns:
             Agent: A configured CrewAI agent for analyzing research papers
         """
-        # Create the scraping tool with academic paper optimization
-        scrape_tool = ScrapeWebsiteTool()
-
         # Load the system prompt from templates
         system_prompt = load_prompt_template("research_paper_analyst")
 
@@ -28,7 +25,7 @@ class ResearchPaperAnalyst(BaseAgent):
                       "key findings, methodologies, and limitations. You excel at "
                       "synthesizing information across multiple papers to identify "
                       "patterns, contradictions, and research gaps.",
-            tools=[scrape_tool],
+            tools=[scrape_website],  # Pass the function directly
             system_prompt=system_prompt,
             verbose=True
         )

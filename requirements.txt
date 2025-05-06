@@ -1,5 +1,6 @@
 # Core dependencies
-crewai>=0.28.0
+crewai>=0.75.0
+crewai-tools>=0.1.0
 python-dotenv>=1.0.0
 
 # LLM and API integrations

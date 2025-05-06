@@ -36,19 +36,18 @@ class IdeaGenerationTask:
         )
 
         # Define expected output format with schema example
-        expected_output = (
-            "A JSON list of research ideas with this structure:\n"
-            "[\n"
-            "  {\n"
-            "    \"idea_title\": \"Title of Research Idea\",\n"
-            "    \"description\": \"Detailed description of the research idea\",\n"
-            "    \"rationale\": \"Explanation of why this idea is valuable and how it addresses gaps\",\n"
-            "    \"related_papers\": [\"Paper Title 1\", \"Paper Title 2\"],\n"
-            "    \"novelty_score\": 8.5  // Rate from 1-10 how novel this idea is\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-        )
+        expected_output = """A JSON list of research ideas with this structure:
+        [
+          {{
+            "idea_title": "Title of Research Idea",
+            "description": "Detailed description of the research idea",
+            "rationale": "Explanation of why this idea is valuable and how it addresses gaps",
+            "related_papers": ["Paper Title 1", "Paper Title 2"],
+            "novelty_score": 8.5  // Rate from 1-10 how novel this idea is
+          }},
+          ...
+        ]
+        """
 
         return Task(
             description=task_description,
